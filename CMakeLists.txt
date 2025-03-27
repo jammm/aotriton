@@ -36,6 +36,7 @@ endif()
 find_package(Python3 ${AOTRITON_MIN_PYTHON} COMPONENTS Interpreter REQUIRED)
 # Must set this otherwise hip-config-amd.cmake cannot find AMDDeviceLibs
 list(APPEND CMAKE_PREFIX_PATH "/opt/rocm")
+set(HIP_PLATFORM "amd")
 find_package(hip REQUIRED)
 
 set(VENV_DIR "${CMAKE_CURRENT_BINARY_DIR}/venv" CACHE STRING "Virtual Environment Directory")
