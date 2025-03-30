@@ -17,6 +17,7 @@ GPU_TO_DIRECTORY = {
     'MI300X' : 'amd-gfx942',
     'Navi31' : 'amd-gfx110x',
     'Navi32' : 'amd-gfx110x',
+    'StrixHalo' : 'amd-gfx115x',
     'Unidentified' : 'amd-gfx950',
     'RX9070XT'    : 'amd-gfx120x',
 }
@@ -26,6 +27,7 @@ GPU_TO_CLUSTER_SUFFIX = {
     'MI300X' : 'MI300X',
     'Navi31' : 'Navi3x',
     'Navi32' : 'Navi3x',
+    'StrixHalo' : 'StrixHalo',
     'Unidentified'      : 'Unidentified',
     'RX9070XT'    : 'RX9070XT',
 }
