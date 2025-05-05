@@ -12,6 +12,24 @@ set(AOTRITON_KERNEL_STORAGE_V2_DIR "${AOTRITON_V2_BUILD_DIR}/aotriton.images")
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${AOTRITON_V2_BUILD_DIR}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${AOTRITON_KERNEL_STORAGE_V2_DIR}")
 
+execute_process(COMMAND ${CMAKE_COMMAND}
+  -E env VIRTUAL_ENV=${VENV_DIR}
+  "${VENV_BIN_PYTHON}" -m v2python.gpu_targets
+  --target_arch ${AOTRITON_TARGET_ARCH}
+  --target_gpus ${AOTRITON_OVERRIDE_TARGET_GPUS}
+  WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
+  OUTPUT_VARIABLE EFFECTIVE_TARGET_GPUS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  COMMAND_ERROR_IS_FATAL ANY)
+message(STATUS "AOTRITON_TARGET_ARCH ${AOTRITON_TARGET_ARCH}")
+message(STATUS "AOTRITON_OVERRIDE_TARGET_GPUS ${AOTRITON_OVERRIDE_TARGET_GPUS}")
+message(STATUS "EFFECTIVE_TARGET_GPUS ${EFFECTIVE_TARGET_GPUS}")
+
+# Decompress tuning_database.sqlite.xz
+execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
+  "${CMAKE_SOURCE_DIR}/v2python/rules/tuning_database.sqlite3.tar.xz"
+  WORKING_DIRECTORY "${AOTRITON_V2_BUILD_DIR}")
+
 get_filename_component(AOTRITON_COMPILER "${CMAKE_CURRENT_LIST_DIR}/../v2python/compile.py" ABSOLUTE)
 message("AOTRITON_COMPILER ${AOTRITON_COMPILER}")
 
@@ -46,8 +64,13 @@ if(NOT AOTRITON_NOIMAGE_MODE)
     COMMAND ${CMAKE_COMMAND}
     -E env VIRTUAL_ENV=${VENV_DIR}
     AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
+<<<<<<< HEAD
     "${VENV_DIR}/bin/python" -m v2python.generate_compile
     --target_gpus ${TARGET_GPUS} 
+=======
+    "${VENV_BIN_PYTHON}" -m v2python.generate_compile
+    --target_gpus ${EFFECTIVE_TARGET_GPUS} 
+>>>>>>> e4f417b (CMakeLists.txt: support building with MSVC on Windows)
     --build_dir "${AOTRITON_V2_BUILD_DIR}"
     --bare_mode ${GENERATE_OPTION}
     --generate_cluster_info
@@ -79,7 +102,7 @@ if(NOT AOTRITON_NOIMAGE_MODE)
       COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR}
       TRITON_CACHE_DIR=${CMAKE_BINARY_DIR}/triton-cache
       TRITON_F32_DEFAULT="ieee"
-      "${VENV_DIR}/bin/python"
+      "${VENV_BIN_PYTHON}"
       "${AOTRITON_COMPILER}"
       "${SRC}"
       "--kernel_name" "${KNAME}"
@@ -119,7 +142,7 @@ if(NOT AOTRITON_NOIMAGE_MODE)
     # message(STATUS "Add AKS2 ${AKS2}")
     add_custom_command(OUTPUT "${AKS2}"
       COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR}
-      "${VENV_DIR}/bin/python"
+      "${VENV_BIN_PYTHON}"
       -m v2python.aks2
       -o "${AKS2}"
       --
@@ -142,18 +165,32 @@ execute_process(
   COMMAND ${CMAKE_COMMAND}
   -E env VIRTUAL_ENV=${VENV_DIR}
   AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
+<<<<<<< HEAD
   "${VENV_DIR}/bin/python" -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} --bare_mode ${GENERATE_OPTION}
+=======
+  "${VENV_BIN_PYTHON}" -m v2python.generate_shim --target_gpus ${EFFECTIVE_TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} --bare_mode ${GENERATE_OPTION}
+>>>>>>> e4f417b (CMakeLists.txt: support building with MSVC on Windows)
   COMMAND_ECHO STDOUT
   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
   COMMAND_ERROR_IS_FATAL ANY
 )
-file(STRINGS "${AOTRITON_V2_BUILD_DIR}/Bare.shim" SHIM_CC_FILES)
+file(STRINGS "${AOTRITON_V2_BUILD_DIR}/Bare.shim" SHIM_CC_STRINGS)
+# Convert `SHIM_CC_STRINGS` from list of STRINGs to list of PATHs so that
+# back slashes are property interpreted on Windows
+foreach(p IN LISTS SHIM_CC_STRINGS)
+  get_filename_component(p_path "${p}" ABSOLUTE)
+  list(APPEND SHIM_CC_FILES "${p_path}")
+endforeach()
 
 add_custom_target(aotriton_v2_gen_shim 
   COMMAND ${CMAKE_COMMAND}
   -E env VIRTUAL_ENV=${VENV_DIR}
   AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
+<<<<<<< HEAD
   "${VENV_DIR}/bin/python" -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} ${AOTRITON_SHIM_FLAGS} ${GENERATE_OPTION}
+=======
+  "${VENV_BIN_PYTHON}" -m v2python.generate_shim --target_gpus ${EFFECTIVE_TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} ${AOTRITON_SHIM_FLAGS} ${GENERATE_OPTION}
+>>>>>>> e4f417b (CMakeLists.txt: support building with MSVC on Windows)
   BYPRODUCTS ${SHIM_CC_FILES}  # Essential, otherwise add_library complains
   COMMAND_EXPAND_LISTS
   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
@@ -167,7 +204,7 @@ if(NOT AOTRITON_NOIMAGE_MODE)
 endif()
 
 add_library(aotriton_v2 SHARED ${SHIM_CC_FILES})
-set(AOTRITON_LIBRARY_FILE libaotriton${AOTRITON_NAME_SUFFIX}_v2.so)
+set_target_properties(aotriton_v2 PROPERTIES LINKER_LANGUAGE CXX)
 add_dependencies(aotriton_v2 aotriton_v2_gen_shim)
 if(AOTRITON_ENABLE_SUFFIX)
   set_target_properties(aotriton_v2 PROPERTIES OUTPUT_NAME "aotriton${AOTRITON_NAME_SUFFIX}_v2")
@@ -189,10 +226,11 @@ target_link_libraries(aotriton_v2 PUBLIC hip::host hip::amdhip64)
 set_target_properties(aotriton_v2 PROPERTIES VERSION
   ${AOTRITON_VERSION_MAJOR_INT}.${AOTRITON_VERSION_MINOR_INT}.${AOTRITON_VERSION_PATCH_INT})
 
+# `set_aotriton_version.ld` adds "AOTRITON <VERSION>" at the end of the .comment section
 execute_process(
   COMMAND ${CMAKE_COMMAND}
   -E env VIRTUAL_ENV=${VENV_DIR}
-  "${VENV_DIR}/bin/python" -m v2python.ld_script
+  "${VENV_BIN_PYTHON}" -m v2python.ld_script
   -o "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld"
   ${AOTRITON_VERSION_MAJOR_INT}
   ${AOTRITON_VERSION_MINOR_INT}
