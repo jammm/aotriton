@@ -64,13 +64,8 @@ if(NOT AOTRITON_NOIMAGE_MODE)
     COMMAND ${CMAKE_COMMAND}
     -E env VIRTUAL_ENV=${VENV_DIR}
     AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
-<<<<<<< HEAD
-    "${VENV_DIR}/bin/python" -m v2python.generate_compile
-    --target_gpus ${TARGET_GPUS} 
-=======
     "${VENV_BIN_PYTHON}" -m v2python.generate_compile
     --target_gpus ${EFFECTIVE_TARGET_GPUS} 
->>>>>>> e4f417b (CMakeLists.txt: support building with MSVC on Windows)
     --build_dir "${AOTRITON_V2_BUILD_DIR}"
     --bare_mode ${GENERATE_OPTION}
     --generate_cluster_info
@@ -165,11 +160,7 @@ execute_process(
   COMMAND ${CMAKE_COMMAND}
   -E env VIRTUAL_ENV=${VENV_DIR}
   AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
-<<<<<<< HEAD
-  "${VENV_DIR}/bin/python" -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} --bare_mode ${GENERATE_OPTION}
-=======
   "${VENV_BIN_PYTHON}" -m v2python.generate_shim --target_gpus ${EFFECTIVE_TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} --bare_mode ${GENERATE_OPTION}
->>>>>>> e4f417b (CMakeLists.txt: support building with MSVC on Windows)
   COMMAND_ECHO STDOUT
   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
   COMMAND_ERROR_IS_FATAL ANY
@@ -186,11 +177,7 @@ add_custom_target(aotriton_v2_gen_shim
   COMMAND ${CMAKE_COMMAND}
   -E env VIRTUAL_ENV=${VENV_DIR}
   AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
-<<<<<<< HEAD
-  "${VENV_DIR}/bin/python" -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} ${AOTRITON_SHIM_FLAGS} ${GENERATE_OPTION}
-=======
   "${VENV_BIN_PYTHON}" -m v2python.generate_shim --target_gpus ${EFFECTIVE_TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} ${AOTRITON_SHIM_FLAGS} ${GENERATE_OPTION}
->>>>>>> e4f417b (CMakeLists.txt: support building with MSVC on Windows)
   BYPRODUCTS ${SHIM_CC_FILES}  # Essential, otherwise add_library complains
   COMMAND_EXPAND_LISTS
   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
@@ -222,8 +209,6 @@ generate_export_header(aotriton_v2
   EXPORT_MACRO_NAME AOTRITON_API
   EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/../include/aotriton/export.h
 )
-set_target_properties(aotriton_v2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(aotriton_v2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 target_include_directories(aotriton_v2 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../include>)
 # for <build>/include/aotriton/config.h. Code should use <aotriton/config.h>
@@ -243,20 +228,27 @@ target_link_libraries(aotriton_v2 PUBLIC hip::host hip::amdhip64)
 set_target_properties(aotriton_v2 PROPERTIES VERSION
   ${AOTRITON_VERSION_MAJOR_INT}.${AOTRITON_VERSION_MINOR_INT}.${AOTRITON_VERSION_PATCH_INT})
 
-# `set_aotriton_version.ld` adds "AOTRITON <VERSION>" at the end of the .comment section
-execute_process(
-  COMMAND ${CMAKE_COMMAND}
-  -E env VIRTUAL_ENV=${VENV_DIR}
-  "${VENV_BIN_PYTHON}" -m v2python.ld_script
-  -o "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld"
-  ${AOTRITON_VERSION_MAJOR_INT}
-  ${AOTRITON_VERSION_MINOR_INT}
-  ${AOTRITON_VERSION_PATCH_INT}
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_PARENT_DIR}"
-  COMMAND_ERROR_IS_FATAL ANY
-)
-target_link_options(aotriton_v2 PRIVATE
-                    -T "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld")
+if(NOT WIN32)
+  # `set_aotriton_version.ld` adds "AOTRITON <VERSION>" at the end of the ELF ".comment" section
+  execute_process(
+    COMMAND ${CMAKE_COMMAND}
+    -E env VIRTUAL_ENV=${VENV_DIR}
+    "${VENV_BIN_PYTHON}" -m v2python.ld_script
+    -o "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld"
+    ${AOTRITON_VERSION_MAJOR_INT}
+    ${AOTRITON_VERSION_MINOR_INT}
+    ${AOTRITON_VERSION_PATCH_INT}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_PARENT_DIR}"
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  target_link_options(aotriton_v2 PRIVATE
+                      -T "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld")
+endif(WIN32)
+
+# Otherwise the binary size blows up
+# FIXME: Properly export symbols
+set_target_properties(aotriton_v2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(aotriton_v2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 include(GNUInstallDirs)
 message("CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}")
