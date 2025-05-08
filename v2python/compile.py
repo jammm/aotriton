@@ -142,8 +142,8 @@ def ipc_compile(ipc_in, ipc_out):
         out_path = do_compile(args)
         ipc_out.put('Complete')
     except Exception as e:
-        if args.verbose:
-            print(e)
+        #if args.verbose:
+        print(e)
         ipc_out.put('Exception')
 
 def main():
