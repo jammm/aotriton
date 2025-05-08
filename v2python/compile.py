@@ -138,13 +138,13 @@ def do_compile(args):
 
 def ipc_compile(ipc_in, ipc_out):
     args = ipc_in.get()
-    try:
-        out_path = do_compile(args)
-        ipc_out.put('Complete')
-    except Exception as e:
-        #if args.verbose:
-        print(e)
-        ipc_out.put('Exception')
+    while True:
+        try:
+            out_path = do_compile(args)
+            ipc_out.put('Complete')
+            break
+        except Exception as e:
+            print(e, "trying again...")
 
 def main():
     # command-line arguments
