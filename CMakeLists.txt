@@ -121,7 +121,7 @@ if(NOT AOTRITON_NOIMAGE_MODE)
   if(INSTALL_TRITON_FROM_WHEEL)
     add_custom_command(OUTPUT "${AOTRITON_TRITON_SO}"
       COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR}
-        "${VENV_BIN_PYTHON}" -m pip install "${INSTALL_TRITON_FROM_WHEEL}"
+        "${VENV_BIN_PYTHON}" -m pip install torch && "${VENV_BIN_PYTHON}" -m pip install "${INSTALL_TRITON_FROM_WHEEL}"
     )
   else()
     add_custom_command(OUTPUT "${AOTRITON_TRITON_SO}"

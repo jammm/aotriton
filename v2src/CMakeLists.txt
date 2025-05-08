@@ -65,7 +65,7 @@ if(NOT AOTRITON_NOIMAGE_MODE)
     -E env VIRTUAL_ENV=${VENV_DIR}
     AOTRITON_ENABLE_FP32=${AOTRITON_ENABLE_FP32}
     "${VENV_BIN_PYTHON}" -m v2python.generate_compile
-    --target_gpus ${EFFECTIVE_TARGET_GPUS} 
+    --target_gpus ${AOTRITON_OVERRIDE_TARGET_GPUS} 
     --build_dir "${AOTRITON_V2_BUILD_DIR}"
     --bare_mode ${GENERATE_OPTION}
     --generate_cluster_info
