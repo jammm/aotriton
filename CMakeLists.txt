@@ -105,6 +105,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_
 message("VENV_SITE ${VENV_SITE}")
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_BIN_PYTHON}" -m pip install -r "${CMAKE_CURRENT_LIST_DIR}/requirements.txt")
+if (WIN32)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_BIN_PYTHON}" -m pip uninstall -y ninja)
+endif()
 
 # AOTRITON_NOIMAGE_MODE does not need Triton
 if(NOT AOTRITON_NOIMAGE_MODE)
