@@ -4,6 +4,7 @@
 
 from pathlib import Path
 import json
+import os
 
 SOURCE_PATH = Path(__file__).resolve()
 
@@ -34,7 +35,11 @@ class ObjectFileDescription(object):
         self.KERNEL_FAMILY = self._triton_kernel_desc.KERNEL_FAMILY
         self.SHIM_KERNEL_NAME = self._triton_kernel_desc.SHIM_KERNEL_NAME
         self._signature = signature
-        self._hsaco_kernel_path = Path(hsaco_kernel_path)
+        clean_path = str(hsaco_kernel_path)
+        if os.name == 'nt':
+            # sanitize the incoming path by stripping out any '^' characters
+            clean_path = clean_path.replace('^', '')
+        self._hsaco_kernel_path = Path(clean_path)
         # self._hsaco_metatdata_path = Path() if triton_metadata_path is None else self._triton_file_path.with_suffix('.json')
         self._hsaco_metatdata_path = self._hsaco_kernel_path.with_suffix('.json')
         if self.compiled_files_exist:
