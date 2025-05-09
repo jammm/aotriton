@@ -14,11 +14,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${AOTRITON_KERNEL_ST
 
 message(STATUS "TARGET_GPUS ${TARGET_GPUS}")
 
-# Decompress tuning_database.sqlite.xz
-execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
-  "${CMAKE_SOURCE_DIR}/v2python/rules/tuning_database.sqlite3.tar.xz"
-  WORKING_DIRECTORY "${AOTRITON_V2_BUILD_DIR}")
-
 get_filename_component(AOTRITON_COMPILER "${CMAKE_CURRENT_LIST_DIR}/../v2python/compile.py" ABSOLUTE)
 message("AOTRITON_COMPILER ${AOTRITON_COMPILER}")
 
@@ -234,12 +229,7 @@ if(NOT WIN32)
   )
   target_link_options(aotriton_v2 PRIVATE
                       -T "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld")
-endif(WIN32)
-
-# Otherwise the binary size blows up
-# FIXME: Properly export symbols
-set_target_properties(aotriton_v2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(aotriton_v2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+endif(NOT WIN32)
 
 include(GNUInstallDirs)
 message("CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}")
