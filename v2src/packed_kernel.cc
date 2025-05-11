@@ -50,9 +50,7 @@ locate_aotriton_images() {
 #endif
 
 static int fd_open(const char *pathname, int msvc_flags) {
-    std::string cleaned(pathname);
-    cleaned.erase(std::remove(cleaned.begin(), cleaned.end(), '^'), cleaned.end());
-    return _open(cleaned.c_str(), msvc_flags);
+    return _open(pathname, msvc_flags);
 }
 
 static int fd_close(int fd) {
@@ -254,7 +252,12 @@ PackedKernel::filter(const char* stem_name) const {
   if (status() != hipSuccess) {
     return { nullptr, 0, 0, dim3 { 0, 0, 0 } };
   }
-  std::string_view filename(stem_name);
+  std::string modified(stem_name);
+  auto pos = modified.find("-F__");
+  if (pos != std::string::npos) {
+    modified.insert(pos + 4, "^");
+  }
+  std::string_view filename(modified);
   auto iter = directory_.find(filename);
   if (iter == directory_.end())
     return { nullptr, 0, 0, dim3 { 0, 1, 1 } };
