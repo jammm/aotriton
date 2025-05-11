@@ -50,7 +50,9 @@ locate_aotriton_images() {
 #endif
 
 static int fd_open(const char *pathname, int msvc_flags) {
-    return _open(pathname, msvc_flags);
+    std::string cleaned(pathname);
+    cleaned.erase(std::remove(cleaned.begin(), cleaned.end(), '^'), cleaned.end());
+    return _open(cleaned.c_str(), msvc_flags);
 }
 
 static int fd_close(int fd) {
@@ -119,7 +121,7 @@ PackedKernel::open(const char* package_path) {
   const auto& u8_temp = (storage_base / rel_path).u8string();
   std::string p = std::string(reinterpret_cast<const char*>(u8_temp.data()),
                        u8_temp.size());
-  int aks2fd = fd_open((const char *)(p.c_str()), O_RDONLY);
+  int aks2fd = fd_open((const char *)(p.c_str()), O_RDONLY | O_BINARY);
   if (aks2fd < 0) {
 #if AOTRITON_KERNEL_VERBOSE
     std::cerr << "open(\"" << p << "\")"
@@ -198,7 +200,7 @@ PackedKernel::PackedKernel(int fd) {
   while (true) {
     if (strm.avail_in == 0) {
       strm.next_in = inbuf;
-      auto rbytes = read(fd, inbuf, AOTRITON_LZMA_BUFSIZ);
+      auto rbytes = fd_read(fd, inbuf, AOTRITON_LZMA_BUFSIZ);
       if (rbytes <= 0) {
         action = LZMA_FINISH;
         break;
