@@ -22,7 +22,7 @@ int64_t [[context_class_name]]::godel_number() const
     return sum;
 }
 
-hipError_t
+hipError_t AOTRITON_API
 [[context_class_name]]::lookup_optimal(Gpu gpu) {
     auto [arch_number, mod_number] = get_archmod_number(gpu);
     if (arch_number < 0) {
@@ -84,7 +84,7 @@ std::tuple<int, int>
 }
 
 
-hipError_t
+hipError_t AOTRITON_API
 [[context_class_name]]::launch(hipStream_t stream) const {
     DirectKernelArguments direct_args;
     auto [grid, block] = (*this.*selected_pp_args)(direct_args);
